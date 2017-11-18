@@ -1,0 +1,117 @@
+{
+    "channels": [
+        {
+            "displayName": "", 
+            "name": "mR_valvePosition", 
+            "show": true, 
+            "color": [
+                133, 
+                198, 
+                159
+            ], 
+            "isRequested": true, 
+            "id": 0
+        }, 
+        {
+            "displayName": "", 
+            "name": "mR_current", 
+            "show": true, 
+            "color": [
+                255, 
+                170, 
+                0
+            ], 
+            "isRequested": true, 
+            "id": 1
+        }, 
+        {
+            "displayName": "", 
+            "name": "mR_current_derivative", 
+            "show": true, 
+            "color": [
+                68, 
+                212, 
+                234
+            ], 
+            "isRequested": true, 
+            "id": 2
+        }, 
+        {
+            "displayName": "", 
+            "name": "mR_valveSetPoint", 
+            "show": false, 
+            "color": [
+                255, 
+                0, 
+                0
+            ], 
+            "isRequested": true, 
+            "id": 3
+        }, 
+        {
+            "displayName": "", 
+            "name": "mR_e", 
+            "show": false, 
+            "color": [
+                183, 
+                117, 
+                250
+            ], 
+            "isRequested": true, 
+            "id": 4
+        }
+    ], 
+    "commands": [
+        {
+            "initialValue": 1.0, 
+            "displayName": "", 
+            "name": "mR_kp", 
+            "min": 0.0, 
+            "max": 10000.0, 
+            "valueType": 2, 
+            "pendingMode": false, 
+            "inputMethod": 1, 
+            "id": 0
+        }, 
+        {
+            "initialValue": 1.0, 
+            "displayName": "", 
+            "name": "mR_kd", 
+            "min": -100000.0, 
+            "max": 100000.0, 
+            "valueType": 2, 
+            "pendingMode": false, 
+            "inputMethod": 1, 
+            "id": 1
+        }, 
+        {
+            "initialValue": 0.0, 
+            "displayName": "", 
+            "name": "mR_valveTarget", 
+            "min": -100000.0, 
+            "max": 100000.0, 
+            "valueType": 2, 
+            "pendingMode": false, 
+            "inputMethod": 1, 
+            "id": 2
+        }
+    ], 
+    "miscSettings": {
+        "controllerFrameworkAndInterface": "MBED_OS_SERIAL", 
+        "tabs": [
+            {
+                "className": "TabSmallGenericView", 
+                "pathToClassFile": "gui.tabSmallGenericView", 
+                "displayName": "Generische Ansicht"
+            }
+        ], 
+        "comPortBaudRate": 115200, 
+        "comPortDescription": "STMicroelectronics STLink Virtual COM Port (COM3)", 
+        "computerIP": "192.168.0.133", 
+        "udpPort": 10000, 
+        "pathToControllerCodeFolder": "D:\\00 eigene Daten\\000 FH\\Hiwi\\testCodeVentilRegelung\\src", 
+        "suppressParameterConfirmation": false, 
+        "controllerLoopCycleTimeInUs": 5000, 
+        "controllerIP": "192.168.0.15"
+    }
+}
