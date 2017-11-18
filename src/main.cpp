@@ -1,22 +1,30 @@
 #include <mbed.h>
 #include "microRay.h"
 
+// also toggles microRay, so that one can debug with printf's
 //#define DEBUG
 
-#if defined DEBUG
-#define LOOP_PERIOD 1.0f
-#define FIRST_MEASURE_DELAY 0.00001f
-#define SAMPLING_PERIOD 0.00001f
-#define PWM_PERIOD_LENGTH 0.0002f
-
-#else
+// frequency of executing control loop
 #define LOOP_PERIOD 0.0002f
-#define FIRST_MEASURE_DELAY 0.00001f
-#define SAMPLING_PERIOD 0.00001f
-#define PWM_PERIOD_LENGTH 0.0002f
-#endif
 
+// frequency of executing measurements
+#define PWM_PERIOD_LENGTH 0.0002f
+
+#define FIRST_MEASURE_DELAY 0.0000067f
+
+// duration between single measurement steps
+#define SAMPLING_PERIOD 0.0000067f
+
+#define MEASUREMENTS_COUNT 5
+
+// use something greater zero here, otherwise measurements will never be triggered
 #define INITIAL_PWM_DUTY_FACTOR 0.5f
+
+#define LOWER_VALVE_CONTROL_LIMIT 0.3f
+#define UPPER_VALVE_CONTROL_LIMIT 1.0f
+
+
+
 
 void loop();
 void slowLoop();
@@ -30,23 +38,21 @@ void calculateCurrentDerivative();
 float getMeanCurrentDerivative();
 void controlTheValve();
 
-//#if defined DEBUG
-//Serial pc(USBTX, USBRX, 115200);
-//#endif
+#if defined DEBUG
+Serial pc(USBTX, USBRX, 115200);
+#endif
 
 
 
 Timeout laterDoMeasureTimeout;
 PwmOut pwmOut(PE_13);
 InterruptIn pwmOutInterrupt(PD_14);
-//InterruptIn pwmOutInterrupt(PE_11);
 Ticker slowLoopTicker;
 AnalogIn valvePosition(A4);
 AnalogIn valveCurrent(A0);
 AnalogIn valveCurrentDerivative(A2);
 Timer measurementTimer;
 
-#define MEASUREMENTS_COUNT 5
 int measurementCounter = 0;
 bool measurementComplete = false;
 
@@ -68,17 +74,17 @@ DigitalOut redLed(LED3);
 Timer loopTimer;
 
 int main() {
-    //#if !defined DEBUG
+    #if !defined DEBUG
     microRayInit();
-    //#endif
+    #endif
 
+    // loopCycleTimeUs can be set in microRay project settings
     float slowLoopTime = loopCycleTimeUs;
     slowLoopTime = slowLoopTime / 1000000.0f;
     pwmOutInterrupt.rise(&pwmRising);
     pwmOut.period(PWM_PERIOD_LENGTH);
     pwmOut.write(INITIAL_PWM_DUTY_FACTOR);
     slowLoopTicker.attach(&slowLoop, slowLoopTime);
-    //setValveTarget(0.2f);
 
     while(1)
     {
@@ -96,7 +102,9 @@ void loop() {
 }
 
 void slowLoop() {
+    // mainly used for communication with microRay
     blueLed = !blueLed;
+
     mR_valvePosition = valvePosition.read();
     mR_current = getMeanCurrent();
     mR_current_derivative = getMeanCurrentDerivative();
@@ -105,9 +113,9 @@ void slowLoop() {
 
     setValveTarget(mR_valveTarget);
 
-    //#if !defined DEBUG
+    #if !defined DEBUG
     microRayCommunicate();
-    //#endif
+    #endif
 }
 
 void pwmRising() {
@@ -198,9 +206,9 @@ void calculateCurrentDerivative() {
 
     float adjustedCurrentDerivativeTEMP = nom / denom;
 
-    //#if defined DEBUG
-    //pc.printf("xMean %f, yMean %f\n", xMean, yMean);
-    //#endif
+    #if defined DEBUG
+    pc.printf("xMean %f, yMean %f\n", xMean, yMean);
+    #endif
 
 
     //__disable_irq();
@@ -223,12 +231,11 @@ void controlTheValve() {
     e = getValveTarget() - getMeanCurrent();
     valveSetPoint = mR_kp * e + mR_kd * getMeanCurrentDerivative();
 
-    if (valveSetPoint < 0.05f) {
-        valveSetPoint = 0.05f;
+    if (valveSetPoint < LOWER_VALVE_CONTROL_LIMIT) {
+        valveSetPoint = LOWER_VALVE_CONTROL_LIMIT;
     }
-    if (valveSetPoint > 1.0f) {
-        valveSetPoint = 1.0f;
+    if (valveSetPoint > UPPER_VALVE_CONTROL_LIMIT) {
+        valveSetPoint = UPPER_VALVE_CONTROL_LIMIT;
     }
     pwmOut.write(valveSetPoint);
-    //pwmOut.write(0.6f);
 }
