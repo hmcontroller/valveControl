@@ -4,13 +4,13 @@
 #define MBED_OS_SERIAL
 
 // must have parameters
-#define loopCycleTimeUs                            5000
+#define loopCycleTimeUs                            2000
 #define CHANNELS_AVAILABLE_COUNT                      5
 #define CHANNELS_REQUESTED_COUNT                      5
 #define CHANNELS_UNREQUESTED_COUNT                    0
 #define PARAMETER_COUNT                               3
 #define SPECIAL_COMMANDS_COUNT                        2
-#define BAUD_RATE                                115200
+#define BAUD_RATE                                921600
 #define INT_TYPE                                      1
 #define FLOAT_TYPE                                    2
 

@@ -105,13 +105,13 @@
                 "displayName": "Generische Ansicht"
             }
         ], 
-        "comPortBaudRate": 115200, 
+        "comPortBaudRate": 921600, 
         "comPortDescription": "STMicroelectronics STLink Virtual COM Port (COM3)", 
         "computerIP": "192.168.0.133", 
         "udpPort": 10000, 
         "pathToControllerCodeFolder": "D:\\00 eigene Daten\\000 FH\\Hiwi\\valveControl\\src", 
         "suppressParameterConfirmation": false, 
-        "controllerLoopCycleTimeInUs": 5000, 
+        "controllerLoopCycleTimeInUs": 2000, 
         "controllerIP": "192.168.0.15"
     }
 }

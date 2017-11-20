@@ -147,7 +147,7 @@ void serialSendCompleteThree(int events) {
 
 void microRayInit() {
     dutyCycleTimer.start();
-    serialReceiver.attach(&readIncomingBytesIntoBuffer, 0.0001f);
+    serialReceiver.attach(&readIncomingBytesIntoBuffer, 0.00001f);
     //serialEventWriteComplete.attach(serialSendComplete);
     //serialEventReceiveComplete.attach(serialReadComplete);
 
