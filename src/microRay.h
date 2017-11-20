@@ -13,7 +13,6 @@
 #define BAUD_RATE                                115200
 #define INT_TYPE                                      1
 #define FLOAT_TYPE                                    2
-#define BAUD_RATE                                115200
 
 // All requested channels
 #define mR_valvePosition                         (messageOutBuffer.channels[0])
