@@ -9,10 +9,12 @@
 #define CHANNELS_REQUESTED_COUNT                      5
 #define CHANNELS_UNREQUESTED_COUNT                    0
 #define PARAMETER_COUNT                               3
-#define SPECIAL_COMMANDS_COUNT                        2
-#define BAUD_RATE                                921600
+#define SPECIAL_COMMANDS_COUNT                        3
+#define BAUD_RATE                                115200
 #define INT_TYPE                                      1
 #define FLOAT_TYPE                                    2
+#define RECORD_BUFFER_LENGTH                          1
+#define PAUSE_AFTER_RECORD                            0
 
 // All requested channels
 #define mR_valvePosition                         (messageOutBuffer.channels[0])
@@ -31,6 +33,7 @@
 // all special parameters
 #define loopCycleTimeExceededByUs                (specialCommands[0])
 #define serialTransmissionLag                    (specialCommands[1])
+#define mrRecordModeEnable                       (specialCommands[2])
 
 
 void microRayInit();
@@ -75,10 +78,15 @@ typedef struct Parameter {
 } Parameter;
 
 extern Parameter parameters[PARAMETER_COUNT];
-extern float specialCommands[SPECIAL_COMMANDS_COUNT];
+extern int specialCommands[SPECIAL_COMMANDS_COUNT];
 
 
 // storage for unrequested channels
 // requested channels are stored in messageOutBuffer
 extern float unrequestedChannels[CHANNELS_UNREQUESTED_COUNT];
+
+#define RECORD_MODE 0
+#define RECORD_TRANSMISSION_MODE 1
+#define LIVE_MODE 2
+#define RECORD_WAIT_MODE 3
 #endif

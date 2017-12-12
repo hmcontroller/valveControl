@@ -39,7 +39,7 @@
         {
             "displayName": "", 
             "name": "mR_valveSetPoint", 
-            "show": false, 
+            "show": true, 
             "color": [
                 255, 
                 0, 
@@ -51,7 +51,7 @@
         {
             "displayName": "", 
             "name": "mR_e", 
-            "show": false, 
+            "show": true, 
             "color": [
                 183, 
                 117, 
@@ -85,7 +85,7 @@
             "id": 1
         }, 
         {
-            "initialValue": 0.0, 
+            "initialValue": 0.5, 
             "displayName": "", 
             "name": "mR_valveTarget", 
             "min": -100000.0, 
@@ -105,10 +105,14 @@
                 "displayName": "Generische Ansicht"
             }
         ], 
-        "comPortBaudRate": 921600, 
-        "comPortDescription": "STMicroelectronics STLink Virtual COM Port (COM3)", 
+        "comPortBaudRate": 115200, 
+        "recordMode": false, 
+        "comPortDescription": "STMicroelectronics STLink Virtual COM Port (COM10)", 
+        "pauseAfterRecord": false, 
         "computerIP": "192.168.0.133", 
         "udpPort": 10000, 
+        "recordBufferLength": 1, 
+        "debugMode": false, 
         "pathToControllerCodeFolder": "D:\\00 eigene Daten\\000 FH\\Hiwi\\valveControl\\src", 
         "suppressParameterConfirmation": false, 
         "controllerLoopCycleTimeInUs": 2000, 

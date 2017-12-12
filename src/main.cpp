@@ -8,12 +8,13 @@
 #define LOOP_PERIOD 0.0002f
 
 // frequency of executing measurements
-#define PWM_PERIOD_LENGTH 0.0002f
+#define PWM_PERIOD_LENGTH 0.0005f
 
-#define FIRST_MEASURE_DELAY 0.0000067f
+// #define FIRST_MEASURE_DELAY 0.0000067f
+#define FIRST_MEASURE_DELAY 0.0000001f
 
 // duration between single measurement steps
-#define SAMPLING_PERIOD 0.0000067f
+#define SAMPLING_PERIOD 0.0000001f
 
 #define MEASUREMENTS_COUNT 5
 
@@ -70,6 +71,8 @@ float valveSetPoint = 0.0f;
 DigitalOut yellowLed(LED1);
 DigitalOut blueLed(LED2);
 DigitalOut redLed(LED3);
+DigitalOut togglePin(PB_11);
+
 
 Timer loopTimer;
 
@@ -109,9 +112,11 @@ void slowLoop() {
     mR_current = getMeanCurrent();
     mR_current_derivative = getMeanCurrentDerivative();
     mR_valveSetPoint = valveSetPoint;
-    mR_e = e;
+    // mR_e = e;
 
     setValveTarget(mR_valveTarget);
+
+    // pwmOut.write(mR_valveTarget);
 
     #if !defined DEBUG
     microRayCommunicate();
@@ -119,10 +124,12 @@ void slowLoop() {
 }
 
 void pwmRising() {
-    redLed = !redLed;
-    measurementTimer.reset();
-    measurementTimer.start();
     laterDoMeasureTimeout.attach(&measure, FIRST_MEASURE_DELAY);
+    redLed = !redLed;
+    if (measurementCounter == 0) {
+        measurementTimer.reset();
+        measurementTimer.start();
+    }
 }
 
 void measure() {
@@ -131,7 +138,9 @@ void measure() {
     //__disable_irq();
     momentsOfMeasurements[measurementCounter] = measurementTimer.read_us();
     valvePositionsMeasured[measurementCounter] = valvePosition.read();
+    togglePin = 1;
     valveCurrentMeasured[measurementCounter] = valveCurrent.read();
+    togglePin = 0;
     valveCurrentDerivativeMeasured[measurementCounter] = valveCurrentDerivative.read();
     //__enable_irq();
 
@@ -222,14 +231,25 @@ float getMeanCurrentDerivative() {
     //__disable_irq();
     tempCurrentDerivative = adjustedCurrentDerivative;
     //__enable_irq();
+
+
+
     return tempCurrentDerivative;
 }
 
+float oldE;
 
 void controlTheValve() {
     // valveSetPoint = KP_VALVE * getMeanCurrentDerivative();
-    e = getValveTarget() - getMeanCurrent();
-    valveSetPoint = mR_kp * e + mR_kd * getMeanCurrentDerivative();
+    redLed = !redLed;
+    // e = getValveTarget() - getMeanCurrentDerivative();
+    // valveSetPoint = mR_kp * e + mR_kd * getMeanCurrentDerivative();
+
+    // Spannung und Spulenwiderstand
+    float inductance = (24.0 - 70 * getMeanCurrent()) / getMeanCurrentDerivative();
+
+    e = getValveTarget() - inductance;
+    valveSetPoint = mR_kp * e + mR_kd * (e - oldE) / PWM_PERIOD_LENGTH;
 
     if (valveSetPoint < LOWER_VALVE_CONTROL_LIMIT) {
         valveSetPoint = LOWER_VALVE_CONTROL_LIMIT;
@@ -238,4 +258,6 @@ void controlTheValve() {
         valveSetPoint = UPPER_VALVE_CONTROL_LIMIT;
     }
     pwmOut.write(valveSetPoint);
+    mR_e = inductance;
+    // pwmOut.write(mR_valveTarget);
 }

@@ -4,8 +4,17 @@ void prepareOutMessage();
 void prepareInMessage();
 void sendMessage();
 void receiveMessage();
+void record();
+void recordMessage();
+void transmitRecordings();
 
 unsigned long lastTime = 0;
+volatile bool lastMessageSendComplete = false;
+
+int sendMode = LIVE_MODE;
+int recordingCounter = 0;
+int recordingSendCounter = 0;
+
 
 // storage for unrequested channels
 float unrequestedChannels[CHANNELS_UNREQUESTED_COUNT];
@@ -20,6 +29,8 @@ int sendBytesCount = 0;
 MessageOut messageOutBuffer;
 MessageIn messageInBuffer;
 
+MessageOut recordBuffer[RECORD_BUFFER_LENGTH];
+
 void prepareOutMessage(unsigned long loopStartTime)
 {
     // map rotating parameters
@@ -30,7 +41,7 @@ void prepareOutMessage(unsigned long loopStartTime)
     #if !defined(SUPPRESS_PARAM_CONFIRMATION)
     messageOutBuffer.parameterNumber = parameterSendCounter;
     if (parameterSendCounter < 0) {
-        messageOutBuffer.parameterValueFloat = specialCommands[(parameterSendCounter + 1) * -1];
+        messageOutBuffer.parameterValueInt = specialCommands[(parameterSendCounter + 1) * -1];
     }
     else {
         switch (parameters[parameterSendCounter].dataType) {
@@ -68,25 +79,78 @@ void prepareInMessage() {
         }
     }
     else {
-        specialCommands[(messageInBuffer.parameterNumber + 1) * -1] = messageInBuffer.parameterValueFloat;
+        // toggle recording mode
+        if (messageInBuffer.parameterNumber == -3) {
+            if (messageInBuffer.parameterValueInt != specialCommands[(messageInBuffer.parameterNumber + 1) * -1]) {
+                if (messageInBuffer.parameterValueInt == 1) {
+                    sendMode = RECORD_MODE;
+                }
+                else if (messageInBuffer.parameterValueInt == 0) {
+                    sendMode = RECORD_TRANSMISSION_MODE;
+                }
+            }
+        }
+        specialCommands[(messageInBuffer.parameterNumber + 1) * -1] = messageInBuffer.parameterValueInt;
     }
 }
 
 void microRayCommunicate()
 {
     receiveMessage();
-    sendMessage();
+
+#ifndef mrDEBUG
+    switch (sendMode) {
+        case RECORD_MODE:
+            record();
+            break;
+        case RECORD_TRANSMISSION_MODE:
+            transmitRecordings();
+            break;
+        case LIVE_MODE:
+            sendMessage();
+            break;
+        default:
+            break;
+    }
+#endif
+}
+
+void record() {
+    recordMessage();
+    recordBuffer[recordingCounter] = messageOutBuffer;
+    recordingCounter += 1;
+    if (recordingCounter > RECORD_BUFFER_LENGTH) {
+        recordingCounter = 0;
+    }
+}
+
+void transmitRecordings() {
+    // blocks until finished
+    for (recordingSendCounter = 0; recordingSendCounter < RECORD_BUFFER_LENGTH; recordingSendCounter++) {
+        int nextMessageIndex = recordingSendCounter + recordingCounter;
+        if (nextMessageIndex > RECORD_BUFFER_LENGTH){
+            nextMessageIndex -= RECORD_BUFFER_LENGTH;
+        }
+        messageOutBuffer = recordBuffer[nextMessageIndex];
+        sendMessage();
+        while (!lastMessageSendComplete) {
+            // wait
+        }
+    }
+    recordingCounter = 0;
+    sendMode = LIVE_MODE;
 }
 
 Parameter parameters[] = {
     { 2, { .valueFloat = 1.0f} },
     { 2, { .valueFloat = 1.0f} },
-    { 2, { .valueFloat = 0.0f} }
+    { 2, { .valueFloat = 0.5f} }
 };
 
-float specialCommands[] = {
-    0.0f,
-    0.0f
+int specialCommands[] = {
+    0,
+    0,
+    0
 };
 
 
@@ -104,7 +168,7 @@ int seekForFullMessage();
 void extractMessage(int messageStartPosition);
 
 
-Serial mRserial(USBTX, USBRX, BAUD_RATE); // tx, rx
+Serial mrSerial(USBTX, USBRX, BAUD_RATE); // tx, rx
 Ticker serialReceiver;
 
 Timer dutyCycleTimer;
@@ -132,15 +196,17 @@ event_callback_t serialEventWriteCompleteThree = serialSendCompleteThree;
 
 int debugCounterSend = 0;
 void serialSendCompleteOne(int events) {
-    mRserial.write((uint8_t *)&messageOutBuffer, sizeof(messageOutBuffer), serialEventWriteCompleteTwo, SERIAL_EVENT_TX_COMPLETE);
+    lastMessageSendComplete = false;
+    mrSerial.write((uint8_t *)&messageOutBuffer, sizeof(messageOutBuffer), serialEventWriteCompleteTwo, SERIAL_EVENT_TX_COMPLETE);
 }
 
 void serialSendCompleteTwo(int events) {
-    mRserial.write((uint8_t *)&endOut, 1, serialEventWriteCompleteThree, SERIAL_EVENT_TX_COMPLETE);
+    mrSerial.write((uint8_t *)&endOut, 1, serialEventWriteCompleteThree, SERIAL_EVENT_TX_COMPLETE);
 }
 
 void serialSendCompleteThree(int events) {
     timeOfLastCompletedMessage = timeOfLastSend;
+    lastMessageSendComplete = true;
 }
 
 
@@ -148,24 +214,17 @@ void serialSendCompleteThree(int events) {
 void microRayInit() {
     dutyCycleTimer.start();
     serialReceiver.attach(&readIncomingBytesIntoBuffer, 0.00001f);
-    //serialEventWriteComplete.attach(serialSendComplete);
-    //serialEventReceiveComplete.attach(serialReadComplete);
-
-    // start async receive of serial data
-    //mRserial.read(&singleInBuffer, 1, serialEventReceiveComplete);
-
-    //mRserial.set_dma_usage_tx(1);
-    //mRserial.set_dma_usage_rx(1);
 }
 
 int serialTransmissionLagCounter = 0;
 void sendMessage() {
-
-    prepareOutMessage((unsigned long)dutyCycleTimer.read_high_resolution_us());
+    if (sendMode == LIVE_MODE) {
+        prepareOutMessage((unsigned long)dutyCycleTimer.read_high_resolution_us());
+    }
 
     if(timeOfLastCompletedMessage == timeOfLastSend) {
         timeOfLastSend = (unsigned long)messageOutBuffer.loopStartTime;
-        mRserial.write((uint8_t *)&startOut, 1, serialEventWriteCompleteOne, SERIAL_EVENT_TX_COMPLETE);
+        mrSerial.write((uint8_t *)&startOut, 1, serialEventWriteCompleteOne, SERIAL_EVENT_TX_COMPLETE);
     }
     else {
         serialTransmissionLagCounter++;
@@ -186,11 +245,16 @@ void receiveMessage() {
     }
 }
 
+
+void recordMessage() {
+    prepareOutMessage((unsigned long)dutyCycleTimer.read_high_resolution_us());
+}
+
 void readIncomingBytesIntoBuffer() {
     int i = 0;
     for (i = 0; i < IN_MESSAGE_SIZE; i++) {
-        if (mRserial.readable ()) {
-            appendByteToBuffer(mRserial.getc());
+        if (mrSerial.readable ()) {
+            appendByteToBuffer(mrSerial.getc());
         }
         else {
             break;
@@ -200,13 +264,12 @@ void readIncomingBytesIntoBuffer() {
 
 void appendByteToBuffer(uint8_t inByte) {
 
-    // mRserial.printf("inbyte %c\n", inByte);
-
     // prevent buffer from overfilling
     if(bufferPosition >= IN_BUFFER_SIZE) {
         // shift whole buffer one to the left to free last position
         shiftGivenPositionToBufferStart(1);
     }
+
     rawMessageInBuffer[bufferPosition] = inByte;
     bufferPosition += 1;
 }
@@ -244,6 +307,5 @@ int seekForFullMessage() {
 void extractMessage(int messageStartPosition) {
     memcpy(&messageInBuffer.parameterNumber, &rawMessageInBuffer[messageStartPosition + 1], 4);
     memcpy(&messageInBuffer.parameterValueInt, &rawMessageInBuffer[messageStartPosition + 1 + 4], 4);
-    // mRserial.printf("%i %.2f",messageInBuffer.parameterNumber, messageInBuffer.parameterValueFloat );
     shiftGivenPositionToBufferStart(messageStartPosition + IN_MESSAGE_SIZE + 2);
 }
