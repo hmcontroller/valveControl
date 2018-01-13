@@ -5,10 +5,10 @@
 
 // must have parameters
 #define loopCycleTimeUs                            2000
-#define CHANNELS_AVAILABLE_COUNT                      5
-#define CHANNELS_REQUESTED_COUNT                      5
+#define CHANNELS_AVAILABLE_COUNT                      7
+#define CHANNELS_REQUESTED_COUNT                      7
 #define CHANNELS_UNREQUESTED_COUNT                    0
-#define PARAMETER_COUNT                               3
+#define PARAMETER_COUNT                               5
 #define SPECIAL_COMMANDS_COUNT                        3
 #define BAUD_RATE                                115200
 #define INT_TYPE                                      1
@@ -22,6 +22,8 @@
 #define mR_current_derivative                    (messageOutBuffer.channels[2])
 #define mR_valveSetPoint                         (messageOutBuffer.channels[3])
 #define mR_e                                     (messageOutBuffer.channels[4])
+#define mR_FIR                                   (messageOutBuffer.channels[5])
+#define mR_PT1                                   (messageOutBuffer.channels[6])
 
 // All unrequested channels
 
@@ -29,6 +31,8 @@
 #define mR_kp                                    (parameters[0]).valueFloat
 #define mR_kd                                    (parameters[1]).valueFloat
 #define mR_valveTarget                           (parameters[2]).valueFloat
+#define mR_TPT1                                  (parameters[3]).valueFloat
+#define mR_KTPT1                                 (parameters[4]).valueFloat
 
 // all special parameters
 #define loopCycleTimeExceededByUs                (specialCommands[0])
@@ -55,8 +59,9 @@ typedef struct MessageIn
 typedef struct MessageOut
 {
     uint32_t loopStartTime;
+    uint16_t statusFlags;
+    uint16_t parameterNumber;
 #if !defined(SUPPRESS_PARAM_CONFIRMATION)
-    uint32_t parameterNumber;
     union {
         int32_t parameterValueInt;
         float parameterValueFloat;
@@ -89,4 +94,8 @@ extern float unrequestedChannels[CHANNELS_UNREQUESTED_COUNT];
 #define RECORD_TRANSMISSION_MODE 1
 #define LIVE_MODE 2
 #define RECORD_WAIT_MODE 3
+#define WAIT_MODE 4
+
+#define STATUS_BAD_DATA 0
+#define STATUS_SKIPPED 1
 #endif

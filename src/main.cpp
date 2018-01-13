@@ -8,15 +8,15 @@
 #define LOOP_PERIOD 0.0002f
 
 // frequency of executing measurements
-#define PWM_PERIOD_LENGTH 0.0005f
+#define PWM_PERIOD_LENGTH 0.001f
 
 // #define FIRST_MEASURE_DELAY 0.0000067f
-#define FIRST_MEASURE_DELAY 0.0000001f
+#define FIRST_MEASURE_DELAY 0.0001f
 
 // duration between single measurement steps
 #define SAMPLING_PERIOD 0.0000001f
 
-#define MEASUREMENTS_COUNT 5
+#define MEASUREMENTS_COUNT 4
 
 // use something greater zero here, otherwise measurements will never be triggered
 #define INITIAL_PWM_DUTY_FACTOR 0.5f
@@ -38,6 +38,8 @@ float getMeanCurrent();
 void calculateCurrentDerivative();
 float getMeanCurrentDerivative();
 void controlTheValve();
+float FIRCurrentDerivative(float);
+float pt1Filter(float u);
 
 #if defined DEBUG
 Serial pc(USBTX, USBRX, 115200);
@@ -108,9 +110,13 @@ void slowLoop() {
     // mainly used for communication with microRay
     blueLed = !blueLed;
 
+    valvePositionsMeasured[measurementCounter] = valvePosition.read();
+
     mR_valvePosition = valvePosition.read();
     mR_current = getMeanCurrent();
-    mR_current_derivative = getMeanCurrentDerivative();
+    mR_current_derivative = getMeanCurrentDerivative() * 30.0;
+    mR_FIR = FIRCurrentDerivative(mR_current_derivative);
+    mR_PT1 = pt1Filter(mR_valvePosition);
     mR_valveSetPoint = valveSetPoint;
     // mR_e = e;
 
@@ -137,11 +143,11 @@ void measure() {
 
     //__disable_irq();
     momentsOfMeasurements[measurementCounter] = measurementTimer.read_us();
-    valvePositionsMeasured[measurementCounter] = valvePosition.read();
+
     togglePin = 1;
     valveCurrentMeasured[measurementCounter] = valveCurrent.read();
     togglePin = 0;
-    valveCurrentDerivativeMeasured[measurementCounter] = valveCurrentDerivative.read();
+    // valveCurrentDerivativeMeasured[measurementCounter] = valveCurrentDerivative.read();
     //__enable_irq();
 
 
@@ -260,4 +266,32 @@ void controlTheValve() {
     pwmOut.write(valveSetPoint);
     mR_e = inductance;
     // pwmOut.write(mR_valveTarget);
+}
+
+float oldDerivatives[5] = { 0.0 };
+float filtered = 0.0f;
+// filter the current derivative please
+float FIRCurrentDerivative(float newest) {
+    int i = 0;
+    for (i=0; i<4; i++) {
+        oldDerivatives[i] = oldDerivatives[i+1];
+    }
+    oldDerivatives[4] = newest;
+
+    filtered = 0.0f;
+    i = 0;
+    for (i=4; i>-1; i--) {
+        filtered += 1.0 * pow(oldDerivatives[i], (-i));
+    }
+
+    return filtered / 10000000.0f;
+}
+
+float lastY = 0.0;
+#define HAHA 0.002
+float pt1Filter(float u) {
+    float TDurchH = mR_TPT1 / HAHA;
+    float filtered =  1 / (TDurchH + 1) * (mR_KTPT1 * u + TDurchH * lastY);
+    lastY = filtered;
+    return filtered;
 }

@@ -15,7 +15,7 @@
         {
             "displayName": "", 
             "name": "mR_current", 
-            "show": true, 
+            "show": false, 
             "color": [
                 255, 
                 170, 
@@ -27,7 +27,7 @@
         {
             "displayName": "", 
             "name": "mR_current_derivative", 
-            "show": true, 
+            "show": false, 
             "color": [
                 68, 
                 212, 
@@ -39,7 +39,7 @@
         {
             "displayName": "", 
             "name": "mR_valveSetPoint", 
-            "show": true, 
+            "show": false, 
             "color": [
                 255, 
                 0, 
@@ -51,7 +51,7 @@
         {
             "displayName": "", 
             "name": "mR_e", 
-            "show": true, 
+            "show": false, 
             "color": [
                 183, 
                 117, 
@@ -59,6 +59,30 @@
             ], 
             "isRequested": true, 
             "id": 4
+        }, 
+        {
+            "displayName": "", 
+            "name": "mR_FIR", 
+            "show": false, 
+            "color": [
+                110, 
+                30, 
+                142
+            ], 
+            "isRequested": true, 
+            "id": 5
+        }, 
+        {
+            "displayName": "", 
+            "name": "mR_PT1", 
+            "show": true, 
+            "color": [
+                59, 
+                30, 
+                194
+            ], 
+            "isRequested": true, 
+            "id": 6
         }
     ], 
     "commands": [
@@ -94,6 +118,28 @@
             "pendingMode": false, 
             "inputMethod": 1, 
             "id": 2
+        }, 
+        {
+            "initialValue": 0.01, 
+            "displayName": "", 
+            "name": "mR_TPT1", 
+            "min": -100000.0, 
+            "max": 100000.0, 
+            "valueType": 2, 
+            "pendingMode": false, 
+            "inputMethod": 1, 
+            "id": 3
+        }, 
+        {
+            "initialValue": 1.0, 
+            "displayName": "", 
+            "name": "mR_KTPT1", 
+            "min": -100000.0, 
+            "max": 100000.0, 
+            "valueType": 2, 
+            "pendingMode": false, 
+            "inputMethod": 1, 
+            "id": 4
         }
     ], 
     "miscSettings": {
@@ -107,7 +153,7 @@
         ], 
         "comPortBaudRate": 115200, 
         "recordMode": false, 
-        "comPortDescription": "STMicroelectronics STLink Virtual COM Port (COM10)", 
+        "comPortDescription": "STMicroelectronics STLink Virtual COM Port (COM13)", 
         "pauseAfterRecord": false, 
         "computerIP": "192.168.0.133", 
         "udpPort": 10000, 
