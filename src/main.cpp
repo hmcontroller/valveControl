@@ -21,8 +21,8 @@
 // use something greater zero here, otherwise measurements will never be triggered
 #define INITIAL_PWM_DUTY_FACTOR 0.5f
 
-#define LOWER_VALVE_CONTROL_LIMIT 0.3f
-#define UPPER_VALVE_CONTROL_LIMIT 0.95f
+#define LOWER_VALVE_CONTROL_LIMIT 0.1f
+#define UPPER_VALVE_CONTROL_LIMIT 0.99f
 
 
 
@@ -55,6 +55,7 @@ AnalogIn valvePosition(A4);
 AnalogIn valveCurrent(A0);
 AnalogIn valveCurrentDerivative(A2);
 Timer measurementTimer;
+Timer loopTimer;
 
 int measurementCounter = 0;
 bool measurementComplete = false;
@@ -66,6 +67,8 @@ volatile float valveCurrentDerivativeMeasured[MEASUREMENTS_COUNT] = {0.0f};
 volatile float valveTarget = 0.0f;
 volatile float meanCurrent = 0.0f;
 volatile float adjustedCurrentDerivative = 0.0f;
+float position;
+float unlimitedSetPoint;
 
 float e = 0.0f;
 float valveSetPoint = 0.0f;
@@ -76,7 +79,6 @@ DigitalOut redLed(LED3);
 DigitalOut togglePin(PB_11);
 
 
-Timer loopTimer;
 
 int main() {
     #if !defined DEBUG
@@ -93,8 +95,18 @@ int main() {
 
     while(1)
     {
+        loopTimer.start();
         loop();
+        while(loopTimer.read_us() < PWM_PERIOD_LENGTH)
+        {
+            // do nothing
+        }
+        loopTimer.reset();
     }
+
+
+
+
 }
 
 void loop() {
@@ -116,9 +128,11 @@ void slowLoop() {
     mR_current = getMeanCurrent();
     mR_current_derivative = getMeanCurrentDerivative() * 30.0;
     mR_FIR = FIRCurrentDerivative(mR_current_derivative);
-    mR_PT1 = pt1Filter(mR_valvePosition);
+    // mR_PT1 = pt1Filter(mR_current_derivative) * -100.0f + 2.93f;
     mR_valveSetPoint = valveSetPoint;
-    // mR_e = e;
+    mR_e = e;
+    mR_position = position;
+    mR_unlimitedSetPoint = unlimitedSetPoint;
 
     setValveTarget(mR_valveTarget);
 
@@ -252,10 +266,15 @@ void controlTheValve() {
     // valveSetPoint = mR_kp * e + mR_kd * getMeanCurrentDerivative();
 
     // Spannung und Spulenwiderstand
-    float inductance = (24.0 - 70 * getMeanCurrent()) / getMeanCurrentDerivative();
+    float filteredCurrentDerivative = pt1Filter(getMeanCurrentDerivative());
+    filteredCurrentDerivative = filteredCurrentDerivative * -2600.0f + 2.6f;
+    float inductance = (24.0 - 70 * getMeanCurrent()) / filteredCurrentDerivative;
+    position = inductance * -0.01f;
 
-    e = getValveTarget() - inductance;
-    valveSetPoint = mR_kp * e + mR_kd * (e - oldE) / PWM_PERIOD_LENGTH;
+    e = (getValveTarget() - valvePosition.read());
+    valveSetPoint = mR_kp * e + mR_kd * (e - oldE) / PWM_PERIOD_LENGTH + getValveTarget() * mR_VORSTEUER;
+
+    unlimitedSetPoint = valveSetPoint;
 
     if (valveSetPoint < LOWER_VALVE_CONTROL_LIMIT) {
         valveSetPoint = LOWER_VALVE_CONTROL_LIMIT;
@@ -264,7 +283,7 @@ void controlTheValve() {
         valveSetPoint = UPPER_VALVE_CONTROL_LIMIT;
     }
     pwmOut.write(valveSetPoint);
-    mR_e = inductance;
+    // mR_e = e;
     // pwmOut.write(mR_valveTarget);
 }
 

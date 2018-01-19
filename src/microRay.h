@@ -5,10 +5,10 @@
 
 // must have parameters
 #define loopCycleTimeUs                            2000
-#define CHANNELS_AVAILABLE_COUNT                      7
-#define CHANNELS_REQUESTED_COUNT                      7
-#define CHANNELS_UNREQUESTED_COUNT                    0
-#define PARAMETER_COUNT                               5
+#define CHANNELS_AVAILABLE_COUNT                      9
+#define CHANNELS_REQUESTED_COUNT                      5
+#define CHANNELS_UNREQUESTED_COUNT                    4
+#define PARAMETER_COUNT                               6
 #define SPECIAL_COMMANDS_COUNT                        3
 #define BAUD_RATE                                115200
 #define INT_TYPE                                      1
@@ -18,14 +18,16 @@
 
 // All requested channels
 #define mR_valvePosition                         (messageOutBuffer.channels[0])
-#define mR_current                               (messageOutBuffer.channels[1])
-#define mR_current_derivative                    (messageOutBuffer.channels[2])
-#define mR_valveSetPoint                         (messageOutBuffer.channels[3])
-#define mR_e                                     (messageOutBuffer.channels[4])
-#define mR_FIR                                   (messageOutBuffer.channels[5])
-#define mR_PT1                                   (messageOutBuffer.channels[6])
+#define mR_valveSetPoint                         (messageOutBuffer.channels[1])
+#define mR_e                                     (messageOutBuffer.channels[2])
+#define mR_position                              (messageOutBuffer.channels[3])
+#define mR_unlimitedSetPoint                     (messageOutBuffer.channels[4])
 
 // All unrequested channels
+#define mR_current                               (unrequestedChannels[0])
+#define mR_current_derivative                    (unrequestedChannels[1])
+#define mR_FIR                                   (unrequestedChannels[2])
+#define mR_PT1                                   (unrequestedChannels[3])
 
 // all parameters
 #define mR_kp                                    (parameters[0]).valueFloat
@@ -33,6 +35,7 @@
 #define mR_valveTarget                           (parameters[2]).valueFloat
 #define mR_TPT1                                  (parameters[3]).valueFloat
 #define mR_KTPT1                                 (parameters[4]).valueFloat
+#define mR_VORSTEUER                             (parameters[5]).valueFloat
 
 // all special parameters
 #define loopCycleTimeExceededByUs                (specialCommands[0])

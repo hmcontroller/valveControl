@@ -21,7 +21,7 @@
                 170, 
                 0
             ], 
-            "isRequested": true, 
+            "isRequested": false, 
             "id": 1
         }, 
         {
@@ -33,7 +33,7 @@
                 212, 
                 234
             ], 
-            "isRequested": true, 
+            "isRequested": false, 
             "id": 2
         }, 
         {
@@ -51,7 +51,7 @@
         {
             "displayName": "", 
             "name": "mR_e", 
-            "show": false, 
+            "show": true, 
             "color": [
                 183, 
                 117, 
@@ -69,28 +69,52 @@
                 30, 
                 142
             ], 
-            "isRequested": true, 
+            "isRequested": false, 
             "id": 5
         }, 
         {
             "displayName": "", 
             "name": "mR_PT1", 
+            "show": false, 
+            "color": [
+                255, 
+                0, 
+                0
+            ], 
+            "isRequested": false, 
+            "id": 6
+        }, 
+        {
+            "displayName": "", 
+            "name": "mR_position", 
             "show": true, 
             "color": [
-                59, 
-                30, 
-                194
+                255, 
+                170, 
+                0
             ], 
             "isRequested": true, 
-            "id": 6
+            "id": 7
+        }, 
+        {
+            "displayName": "", 
+            "name": "mR_unlimitedSetPoint", 
+            "show": false, 
+            "color": [
+                82, 
+                174, 
+                132
+            ], 
+            "isRequested": true, 
+            "id": 8
         }
     ], 
     "commands": [
         {
-            "initialValue": 1.0, 
+            "initialValue": 0.0, 
             "displayName": "", 
             "name": "mR_kp", 
-            "min": 0.0, 
+            "min": -10000.0, 
             "max": 10000.0, 
             "valueType": 2, 
             "pendingMode": false, 
@@ -98,7 +122,7 @@
             "id": 0
         }, 
         {
-            "initialValue": 1.0, 
+            "initialValue": 0.0, 
             "displayName": "", 
             "name": "mR_kd", 
             "min": -100000.0, 
@@ -109,7 +133,7 @@
             "id": 1
         }, 
         {
-            "initialValue": 0.5, 
+            "initialValue": 0.0, 
             "displayName": "", 
             "name": "mR_valveTarget", 
             "min": -100000.0, 
@@ -140,6 +164,17 @@
             "pendingMode": false, 
             "inputMethod": 1, 
             "id": 4
+        }, 
+        {
+            "initialValue": 0.0, 
+            "displayName": "", 
+            "name": "mR_VORSTEUER", 
+            "min": -100000.0, 
+            "max": 100000.0, 
+            "valueType": 2, 
+            "pendingMode": false, 
+            "inputMethod": 1, 
+            "id": 5
         }
     ], 
     "miscSettings": {
@@ -153,7 +188,7 @@
         ], 
         "comPortBaudRate": 115200, 
         "recordMode": false, 
-        "comPortDescription": "STMicroelectronics STLink Virtual COM Port (COM13)", 
+        "comPortDescription": "STMicroelectronics STLink Virtual COM Port (COM10)", 
         "pauseAfterRecord": false, 
         "computerIP": "192.168.0.133", 
         "udpPort": 10000, 
